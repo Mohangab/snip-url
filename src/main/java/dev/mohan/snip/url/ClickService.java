@@ -41,6 +41,16 @@ public class ClickService {
         clicks.save(new ClickEvent(code, truncate(referrer), truncate(userAgent), now));
     }
 
+    // tried buffering clicks in memory and flushing every few secs, works but loses clicks on restart.
+    // not worth it at this traffic level (i.e. zero)
+    //
+    // private final Map<String, LongAdder> pending = new ConcurrentHashMap<>();
+    //
+    // @Scheduled(fixedDelay = 5000)
+    // void flush() {
+    //     pending.forEach((code, n) -> urls.incrementClicksBy(code, n.sumThenReset(), Instant.now()));
+    // }
+
     @Transactional(readOnly = true)
     public LinkStats stats(String code) {
         ShortUrl s = urls.findByCode(code).orElseThrow(() -> new LinkNotFoundException(code));

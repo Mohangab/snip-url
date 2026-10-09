@@ -4,6 +4,7 @@ import dev.mohan.snip.url.AliasTakenException;
 import dev.mohan.snip.url.InvalidUrlException;
 import dev.mohan.snip.url.LinkExpiredException;
 import dev.mohan.snip.url.LinkNotFoundException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -33,6 +34,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AliasTakenException.class)
     public ProblemDetail conflict(AliasTakenException e) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
+    }
+
+    // two people grabbing the same alias at the same time -> unique constraint
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ProblemDetail race(DataIntegrityViolationException e) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "alias already taken");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

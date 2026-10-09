@@ -42,6 +42,8 @@ curl localhost:8080/api/urls/4c93/stats
 
 aliases: 3-32 chars, letters/digits/dash. dupes get a 409.
 
+health: `GET /actuator/health`
+
 ## tests
 
 `./mvnw verify` - uses H2 + a simple in-memory cache, so no postgres/redis needed.
