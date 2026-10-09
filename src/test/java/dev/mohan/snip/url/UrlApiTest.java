@@ -96,6 +96,14 @@ class UrlApiTest {
     }
 
     @Test
+    void whitespaceAroundUrlIsTrimmed() throws Exception {
+        String code = create("{\"url\":\"  https://example.com/trim  \"}").get("code").asText();
+        mvc.perform(get("/" + code))
+                .andExpect(status().isFound())
+                .andExpect(header().string("Location", "https://example.com/trim"));
+    }
+
+    @Test
     void unknownCodeIs404() throws Exception {
         mvc.perform(get("/doesnotexist")).andExpect(status().isNotFound());
     }

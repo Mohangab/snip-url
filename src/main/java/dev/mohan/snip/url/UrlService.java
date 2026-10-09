@@ -25,7 +25,8 @@ public class UrlService {
     }
 
     @Transactional
-    public ShortUrl shorten(String url, String customAlias) {
+    public ShortUrl shorten(String rawUrl, String customAlias) {
+        String url = rawUrl.trim();
         validateUrl(url);
         if (customAlias != null && !customAlias.isBlank()) {
             if (RESERVED.contains(customAlias.toLowerCase(Locale.ROOT)) || repo.existsByCode(customAlias)) {
@@ -49,7 +50,7 @@ public class UrlService {
     static void validateUrl(String url) {
         URI uri;
         try {
-            uri = new URI(url.trim());
+            uri = new URI(url);
         } catch (URISyntaxException e) {
             throw new InvalidUrlException("not a valid url");
         }
