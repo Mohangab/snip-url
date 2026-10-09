@@ -19,3 +19,5 @@ spring:
 snip:
   base-url: ${BASE_URL:http://localhost:8080}
   cache-ttl: 1h
+  rate-limit:
+    creates-per-minute: ${CREATE_RATE_LIMIT:30}

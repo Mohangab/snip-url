@@ -6,6 +6,10 @@ spring:
   cache:
     type: simple
 
+snip:
+  rate-limit:
+    creates-per-minute: 1000
+
 management:
   health:
     redis:
