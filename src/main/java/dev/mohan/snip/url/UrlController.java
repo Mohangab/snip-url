@@ -21,10 +21,12 @@ import java.time.Instant;
 public class UrlController {
 
     private final UrlService service;
+    private final ClickService clickService;
     private final String baseUrl;
 
-    public UrlController(UrlService service, @Value("${snip.base-url}") String baseUrl) {
+    public UrlController(UrlService service, ClickService clickService, @Value("${snip.base-url}") String baseUrl) {
         this.service = service;
+        this.clickService = clickService;
         this.baseUrl = baseUrl;
     }
 
@@ -37,7 +39,7 @@ public class UrlController {
 
     @GetMapping("/{code}/stats")
     public LinkStats stats(@PathVariable String code) {
-        return service.stats(code);
+        return clickService.stats(code);
     }
 
     public record CreateRequest(

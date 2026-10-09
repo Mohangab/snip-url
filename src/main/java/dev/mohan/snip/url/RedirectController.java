@@ -14,9 +14,11 @@ import java.net.URI;
 public class RedirectController {
 
     private final UrlService service;
+    private final ClickService clickService;
 
-    public RedirectController(UrlService service) {
+    public RedirectController(UrlService service, ClickService clickService) {
         this.service = service;
+        this.clickService = clickService;
     }
 
     @GetMapping("/{code:[A-Za-z0-9_-]+}")
@@ -24,7 +26,7 @@ public class RedirectController {
                                          @RequestHeader(value = HttpHeaders.REFERER, required = false) String referrer,
                                          @RequestHeader(value = HttpHeaders.USER_AGENT, required = false) String userAgent) {
         String target = service.resolve(code);
-        service.recordClick(code, referrer, userAgent);
+        clickService.recordClick(code, referrer, userAgent);
         return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(target)).build();
     }
 }
