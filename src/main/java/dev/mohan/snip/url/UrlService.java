@@ -1,13 +1,17 @@
 package dev.mohan.snip.url;
 
 import dev.mohan.snip.util.Base62;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -19,9 +23,11 @@ public class UrlService {
     private static final Set<String> RESERVED = Set.of("api", "actuator", "health", "admin");
 
     private final ShortUrlRepository repo;
+    private final ClickEventRepository clicks;
 
-    public UrlService(ShortUrlRepository repo) {
+    public UrlService(ShortUrlRepository repo, ClickEventRepository clicks) {
         this.repo = repo;
+        this.clicks = clicks;
     }
 
     @Transactional
@@ -77,5 +83,34 @@ public class UrlService {
             throw new LinkExpiredException(code);
         }
         return s.getOriginalUrl();
+    }
+
+    @Async
+    @Transactional
+    public void recordClick(String code, String referrer, String userAgent) {
+        Instant now = Instant.now();
+        repo.incrementClicks(code, now);
+        clicks.save(new ClickEvent(code, truncate(referrer), truncate(userAgent), now));
+    }
+
+    @Transactional(readOnly = true)
+    public LinkStats stats(String code) {
+        ShortUrl s = repo.findByCode(code).orElseThrow(() -> new LinkNotFoundException(code));
+        return new LinkStats(s.getCode(), s.getOriginalUrl(), s.getClicks(), s.getCreatedAt(),
+                s.getLastAccessedAt(), s.getExpiresAt(),
+                top(clicks.countByReferrer(code)), top(clicks.countByUserAgent(code)));
+    }
+
+    private static Map<String, Long> top(List<Object[]> rows) {
+        Map<String, Long> out = new LinkedHashMap<>();
+        rows.stream().limit(5).forEach(r -> out.put((String) r[0], (Long) r[1]));
+        return out;
+    }
+
+    private static String truncate(String s) {
+        if (s == null || s.isBlank()) {
+            return null;
+        }
+        return s.length() > 512 ? s.substring(0, 512) : s;
     }
 }
