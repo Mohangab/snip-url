@@ -8,12 +8,15 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.Locale;
+import java.util.Set;
 
 @Service
 public class UrlService {
 
     // start ids at a bigger number so codes aren't "1", "2", ...
     private static final long ID_OFFSET = 1_000_000L;
+
+    private static final Set<String> RESERVED = Set.of("api", "actuator", "health", "admin");
 
     private final ShortUrlRepository repo;
 
@@ -22,10 +25,24 @@ public class UrlService {
     }
 
     @Transactional
-    public ShortUrl shorten(String url) {
+    public ShortUrl shorten(String url, String customAlias) {
         validateUrl(url);
+        if (customAlias != null && !customAlias.isBlank()) {
+            if (RESERVED.contains(customAlias.toLowerCase(Locale.ROOT)) || repo.existsByCode(customAlias)) {
+                throw new AliasTakenException(customAlias);
+            }
+            ShortUrl s = new ShortUrl(url, Instant.now());
+            s.setCode(customAlias);
+            return repo.save(s);
+        }
         ShortUrl s = repo.save(new ShortUrl(url, Instant.now()));
-        s.setCode(Base62.encode(s.getId() + ID_OFFSET));
+        String code = Base62.encode(s.getId() + ID_OFFSET);
+        // aliases can't contain '_' so this can never clash with one
+        // TODO: this is kinda hacky, maybe just keep aliases in their own namespace
+        if (RESERVED.contains(code) || repo.existsByCode(code)) {
+            code = code + "_";
+        }
+        s.setCode(code);
         return s;
     }
 

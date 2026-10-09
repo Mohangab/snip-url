@@ -1,5 +1,6 @@
 package dev.mohan.snip.web;
 
+import dev.mohan.snip.url.AliasTakenException;
 import dev.mohan.snip.url.InvalidUrlException;
 import dev.mohan.snip.url.LinkNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidUrlException.class)
     public ProblemDetail badUrl(InvalidUrlException e) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
+    }
+
+    @ExceptionHandler(AliasTakenException.class)
+    public ProblemDetail conflict(AliasTakenException e) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
