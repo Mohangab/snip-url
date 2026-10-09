@@ -24,4 +24,11 @@ public class UrlService {
         s.setCode(Base62.encode(s.getId() + ID_OFFSET));
         return s;
     }
+
+    @Transactional(readOnly = true)
+    public String resolve(String code) {
+        return repo.findByCode(code)
+                .map(ShortUrl::getOriginalUrl)
+                .orElseThrow(() -> new LinkNotFoundException(code));
+    }
 }
