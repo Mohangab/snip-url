@@ -19,9 +19,11 @@ public class UrlService {
     private static final Set<String> RESERVED = Set.of("api", "actuator", "health", "admin");
 
     private final ShortUrlRepository repo;
+    private final LinkCache linkCache;
 
-    public UrlService(ShortUrlRepository repo) {
+    public UrlService(ShortUrlRepository repo, LinkCache linkCache) {
         this.repo = repo;
+        this.linkCache = linkCache;
     }
 
     @Transactional
@@ -70,12 +72,12 @@ public class UrlService {
         // TODO: block links pointing back at ourselves (redirect loops)
     }
 
-    @Transactional(readOnly = true)
     public String resolve(String code) {
-        ShortUrl s = repo.findByCode(code).orElseThrow(() -> new LinkNotFoundException(code));
-        if (s.getExpiresAt() != null && s.getExpiresAt().isBefore(Instant.now())) {
+        CachedLink link = linkCache.lookup(code);
+        // expiry is checked on every hit, the cache ttl doesn't know about expiresAt
+        if (link.expiresAt() != null && link.expiresAt().isBefore(Instant.now())) {
             throw new LinkExpiredException(code);
         }
-        return s.getOriginalUrl();
+        return link.url();
     }
 }

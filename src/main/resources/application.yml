@@ -5,6 +5,12 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/snip}
     username: ${DB_USER:snip}
     password: ${DB_PASSWORD:snip}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  cache:
+    type: redis
   jpa:
     open-in-view: false
     hibernate:
@@ -12,3 +18,4 @@ spring:
 
 snip:
   base-url: ${BASE_URL:http://localhost:8080}
+  cache-ttl: 1h
