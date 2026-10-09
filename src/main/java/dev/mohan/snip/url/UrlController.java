@@ -1,5 +1,8 @@
 package dev.mohan.snip.url;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,12 +25,12 @@ public class UrlController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CreateResponse create(@RequestBody CreateRequest req) {
+    public CreateResponse create(@Valid @RequestBody CreateRequest req) {
         ShortUrl s = service.shorten(req.url());
         return new CreateResponse(s.getCode(), baseUrl + "/" + s.getCode(), s.getOriginalUrl());
     }
 
-    public record CreateRequest(String url) {
+    public record CreateRequest(@NotBlank @Size(max = 2048) String url) {
     }
 
     public record CreateResponse(String code, String shortUrl, String url) {
