@@ -25,18 +25,24 @@ public class UrlService {
     }
 
     @Transactional
-    public ShortUrl shorten(String rawUrl, String customAlias) {
+    public ShortUrl shorten(String rawUrl, String customAlias, Instant expiresAt) {
         String url = rawUrl.trim();
         validateUrl(url);
+        if (expiresAt != null && !expiresAt.isAfter(Instant.now())) {
+            throw new InvalidUrlException("expiresAt must be in the future");
+        }
         if (customAlias != null && !customAlias.isBlank()) {
             if (RESERVED.contains(customAlias.toLowerCase(Locale.ROOT)) || repo.existsByCode(customAlias)) {
                 throw new AliasTakenException(customAlias);
             }
             ShortUrl s = new ShortUrl(url, Instant.now());
             s.setCode(customAlias);
+            s.setExpiresAt(expiresAt);
             return repo.save(s);
         }
-        ShortUrl s = repo.save(new ShortUrl(url, Instant.now()));
+        ShortUrl fresh = new ShortUrl(url, Instant.now());
+        fresh.setExpiresAt(expiresAt);
+        ShortUrl s = repo.save(fresh);
         String code = Base62.encode(s.getId() + ID_OFFSET);
         // aliases can't contain '_' so this can never clash with one
         // TODO: this is kinda hacky, maybe just keep aliases in their own namespace
@@ -66,8 +72,10 @@ public class UrlService {
 
     @Transactional(readOnly = true)
     public String resolve(String code) {
-        return repo.findByCode(code)
-                .map(ShortUrl::getOriginalUrl)
-                .orElseThrow(() -> new LinkNotFoundException(code));
+        ShortUrl s = repo.findByCode(code).orElseThrow(() -> new LinkNotFoundException(code));
+        if (s.getExpiresAt() != null && s.getExpiresAt().isBefore(Instant.now())) {
+            throw new LinkExpiredException(code);
+        }
+        return s.getOriginalUrl();
     }
 }

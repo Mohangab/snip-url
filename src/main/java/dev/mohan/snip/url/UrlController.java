@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Instant;
+
 @RestController
 @RequestMapping("/api/urls")
 public class UrlController {
@@ -27,15 +29,16 @@ public class UrlController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CreateResponse create(@Valid @RequestBody CreateRequest req) {
-        ShortUrl s = service.shorten(req.url(), req.customAlias());
-        return new CreateResponse(s.getCode(), baseUrl + "/" + s.getCode(), s.getOriginalUrl());
+        ShortUrl s = service.shorten(req.url(), req.customAlias(), req.expiresAt());
+        return new CreateResponse(s.getCode(), baseUrl + "/" + s.getCode(), s.getOriginalUrl(), s.getExpiresAt());
     }
 
     public record CreateRequest(
             @NotBlank @Size(max = 2048) String url,
-            @Pattern(regexp = "^[A-Za-z0-9-]{3,32}$", message = "must be 3-32 chars, letters/digits/dash") String customAlias) {
+            @Pattern(regexp = "^[A-Za-z0-9-]{3,32}$", message = "must be 3-32 chars, letters/digits/dash") String customAlias,
+            Instant expiresAt) {
     }
 
-    public record CreateResponse(String code, String shortUrl, String url) {
+    public record CreateResponse(String code, String shortUrl, String url, Instant expiresAt) {
     }
 }

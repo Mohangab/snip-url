@@ -2,6 +2,7 @@ package dev.mohan.snip.web;
 
 import dev.mohan.snip.url.AliasTakenException;
 import dev.mohan.snip.url.InvalidUrlException;
+import dev.mohan.snip.url.LinkExpiredException;
 import dev.mohan.snip.url.LinkNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -17,6 +18,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(LinkNotFoundException.class)
     public ProblemDetail notFound(LinkNotFoundException e) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
+    }
+
+    @ExceptionHandler(LinkExpiredException.class)
+    public ProblemDetail gone(LinkExpiredException e) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.GONE, e.getMessage());
     }
 
     @ExceptionHandler(InvalidUrlException.class)
